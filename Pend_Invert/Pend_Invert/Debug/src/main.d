@@ -101,17 +101,23 @@ src/main.d src/main.o: ../src/main.c ../src/asf.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\alloca.h \
  ../src/ASF/common/utils/interrupt.h \
  ../src/ASF/common/utils/interrupt/interrupt_sam_nvic.h \
- ../src/ASF/sam/utils/status_codes.h ../src/ASF/sam/drivers/efc/efc.h \
- ../src/ASF/common/boards/board.h \
- ../src/ASF/sam/boards/samg53_xplained_pro/samg53_xplained_pro.h \
- ../src/config/conf_board.h ../src/ASF/common/services/ioport/ioport.h \
- ../src/ASF/common/services/ioport/sam/ioport_pio.h \
+ ../src/ASF/sam/utils/status_codes.h \
+ ../src/ASF/common/services/delay/delay.h \
  ../src/ASF/common/services/clock/sysclk.h ../src/config/conf_clock.h \
  ../src/ASF/common/services/clock/samg/sysclk.h \
  ../src/ASF/common/services/clock/osc.h \
  ../src/ASF/common/services/clock/samg/osc.h \
- ../src/ASF/sam/drivers/pmc/pmc.h ../src/ASF/common/services/clock/pll.h \
+ ../src/ASF/common/boards/board.h \
+ ../src/ASF/sam/boards/samg53_xplained_pro/samg53_xplained_pro.h \
+ ../src/config/conf_board.h ../src/ASF/sam/drivers/pmc/pmc.h \
+ ../src/ASF/common/services/clock/pll.h \
  ../src/ASF/common/services/clock/samg/pll.h \
+ ../src/ASF/common/services/delay/sam/cycle_counter.h \
+ ../src/ASF/sam/drivers/efc/efc.h ../src/ASF/common/services/gpio/gpio.h \
+ ../src/ASF/common/services/gpio/sam_gpio/sam_gpio.h \
+ ../src/ASF/sam/drivers/pio/pio.h \
+ ../src/ASF/common/services/ioport/ioport.h \
+ ../src/ASF/common/services/ioport/sam/ioport_pio.h \
  ../src/ASF/sam/drivers/pmc/sleep.h ../src/ASF/sam/drivers/rtc/rtc.h \
  ../src/ASF/sam/utils/fpu/fpu.h \
  ../src/ASF/sam/boards/samg53_xplained_pro/led.h \
@@ -121,6 +127,7 @@ src/main.d src/main.o: ../src/main.c ../src/asf.h \
  ../src/ASF/common/services/serial/serial.h \
  ../src/ASF/common/services/serial/sam_uart/uart_serial.h \
  ../src/ASF/sam/drivers/usart/usart.h ../src/config/conf_uart_serial.h \
+ ../src/ASF/sam/drivers/pio/pio_handler.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\time.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\machine\time.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\xlocale.h \
@@ -335,17 +342,7 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-no
 
 ../src/ASF/sam/utils/status_codes.h:
 
-../src/ASF/sam/drivers/efc/efc.h:
-
-../src/ASF/common/boards/board.h:
-
-../src/ASF/sam/boards/samg53_xplained_pro/samg53_xplained_pro.h:
-
-../src/config/conf_board.h:
-
-../src/ASF/common/services/ioport/ioport.h:
-
-../src/ASF/common/services/ioport/sam/ioport_pio.h:
+../src/ASF/common/services/delay/delay.h:
 
 ../src/ASF/common/services/clock/sysclk.h:
 
@@ -357,11 +354,31 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-no
 
 ../src/ASF/common/services/clock/samg/osc.h:
 
+../src/ASF/common/boards/board.h:
+
+../src/ASF/sam/boards/samg53_xplained_pro/samg53_xplained_pro.h:
+
+../src/config/conf_board.h:
+
 ../src/ASF/sam/drivers/pmc/pmc.h:
 
 ../src/ASF/common/services/clock/pll.h:
 
 ../src/ASF/common/services/clock/samg/pll.h:
+
+../src/ASF/common/services/delay/sam/cycle_counter.h:
+
+../src/ASF/sam/drivers/efc/efc.h:
+
+../src/ASF/common/services/gpio/gpio.h:
+
+../src/ASF/common/services/gpio/sam_gpio/sam_gpio.h:
+
+../src/ASF/sam/drivers/pio/pio.h:
+
+../src/ASF/common/services/ioport/ioport.h:
+
+../src/ASF/common/services/ioport/sam/ioport_pio.h:
 
 ../src/ASF/sam/drivers/pmc/sleep.h:
 
@@ -386,6 +403,8 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-no
 ../src/ASF/sam/drivers/usart/usart.h:
 
 ../src/config/conf_uart_serial.h:
+
+../src/ASF/sam/drivers/pio/pio_handler.h:
 
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\time.h:
 

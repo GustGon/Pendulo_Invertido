@@ -2,9 +2,15 @@
 # Automatically-generated file. Do not edit or delete the file
 ################################################################################
 
+src\ASF\common\services\delay\sam\cycle_counter.c
+
+src\ASF\sam\drivers\pio\pio_handler.c
+
 src\ASF\sam\drivers\usart\usart.c
 
 src\ASF\common\services\serial\usart_serial.c
+
+src\ASF\sam\drivers\pio\pio.c
 
 src\ASF\sam\drivers\rtc\rtc.c
 

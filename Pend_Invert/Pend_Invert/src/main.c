@@ -8,10 +8,22 @@
 #include <time.h>
 #include <string.h>
 #include <conf_board.h>
-#include <stdlib.h>
+#include <stdarg.h>
+
+
+void printl(const char * format, ...) {
+	char buffer[256];
+	va_list args;
+	va_start(args, format);
+	vsprintf(buffer, format, args);
+	usart_serial_write_packet(CONF_UART, buffer, strlen(buffer));
+	va_end(args);
+}
+
 
 #define PADRAO	0xAAAAAAAA
 #define ERRO	0x1
+#define TC_CHANNEL	0
 // #define LED0_G	IOPORT_CREATE_PIN(PIOA,16) //Pino do LED Verde
 // #define	LED1_Y	IOPORT_CREATE_PIN(PIOA,0)//Pino do LED Amarelo
 // #define	LED2_R	IOPORT_CREATE_PIN(PIOA,22)//Pino do LED Vermelho
@@ -83,13 +95,14 @@ static void conf_TC (void){
 	pmc_enable_periph_clk(ID_TC0);
 
 	tc_find_mck_divisor(4,tc_sysclk, &tc_div, &tc_tcclks, tc_sysclk);
-	tc_init(TC0, 0, tc_tcclks | TC_CMR_CPCTRG);
+	tc_init(TC0, TC_CHANNEL , tc_tcclks | TC_CMR_CPCTRG);
+	printl("div = %i ; clk = %i ; sysclk = %i \n\n",tc_div,tc_tcclks,tc_sysclk);
 	//interrupção a cada 1 segundo, o maximo mutiplicando é 2 segundos
-	tc_write_rc(TC0, 0, (tc_sysclk/tc_div));
+	tc_write_rc(TC0, TC_CHANNEL, (tc_sysclk/tc_div)*2);
 	
 	NVIC_EnableIRQ(TC0_IRQn);
-	tc_enable_interrupt(TC0, 0, TC_IER_CPCS);
-	tc_start(TC0, 0);
+	tc_enable_interrupt(TC0, TC_CHANNEL, TC_IER_CPCS);
+	tc_start(TC0, TC_CHANNEL);
 }
 
 // config ensaio
@@ -115,20 +128,17 @@ void config_ensaio(void){
 //Interrupção do TC a cada 1 ms.
 void TC0_Handler(void){
 	
-	char str1[128];
-	uint8_t rx_char = 0;
-	uint32_t id = 455;
+	uint32_t id = 45;
 
-	sprintf(str1,"Teste de variavel = %i \n",clock);	
-	usart_serial_write_packet(CONF_UART, str1, sizeof(str1) - 1);
-	//usart_write(CONF_UART,str1);
+	//printl("Teste de variavel = %i \n",id);
 }
 
 int main (void)
 {
 	sysclk_init();
 	board_init();
-	//delay_init(F_CPU);
+	delay_init(F_CPU);
+
 //Função de configuração da UART
 	conf_uart();	
 //Função de configuração do ensaio	
