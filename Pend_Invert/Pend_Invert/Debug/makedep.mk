@@ -4,6 +4,10 @@
 
 src\ASF\common\services\delay\sam\cycle_counter.c
 
+src\ASF\common\utils\stdio\read.c
+
+src\ASF\common\utils\stdio\write.c
+
 src\ASF\sam\drivers\pio\pio_handler.c
 
 src\ASF\sam\drivers\usart\usart.c

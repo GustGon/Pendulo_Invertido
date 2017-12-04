@@ -99,6 +99,9 @@
 // From module: SUPC - Supply Controller
 #include <supc.h>
 
+// From module: Standard serial I/O (stdio) - SAM implementation
+#include <stdio_serial.h>
+
 // From module: System Clock Control - SAMG implementation
 #include <sysclk.h>
 
