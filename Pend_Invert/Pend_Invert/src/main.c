@@ -22,15 +22,26 @@
 
 #define ENC_RES		1024
 #define VOLTA_COMP	360
+#define SETPOINT	0;
+
+/*
+	Define controle
+*/
+
+#define ANGLE_SETPOINT 		0.0
+#define ANGLE_LIMIT 		0.0
+#define ANGLE_KP_AGGR 		0.0
+#define ANGLE_KI_AGGR 		0.0
+#define ANGLE_KD_AGGR 		0.0
+#define ANGLE_KP_CONS 		2.0
+#define ANGLE_KI_CONS 		0.0
+#define ANGLE_KD_CONS 		0.0
+#define ANGLE_IRRECOVERABLE 45.0
+#define CALIBRATED_ZERO_ANGLE 0.0
+#define WINDUP_GUARD 		100
+
 
 volatile uint32_t g_ul_ms_ticks = 0;
-
-// #define LED0_G	IOPORT_CREATE_PIN(PIOA,16) //Pino do LED Verde
-// #define	LED1_Y	IOPORT_CREATE_PIN(PIOA,0)//Pino do LED Amarelo
-// #define	LED2_R	IOPORT_CREATE_PIN(PIOA,22)//Pino do LED Vermelho
-// #define PINO_1  IOPORT_CREATE_PIN(PIOB,3) //Pino (EXT1/5) de análise do tempo de escrita
-// #define	PINO_2	IOPORT_CREATE_PIN(PIOA,15)//Pino (EXT4/5) de análise do tempo de leitura
-
 
 #define STRING_EOL    "\n\r"
 #define STRING_HEADER "\r\n-- Gustavo Gonçalves --\r\n-- PROJETO_PENDULO_INVERTIDO --\r\n" \
@@ -49,6 +60,7 @@ void SysTick_Handler(void);
 void pin_handler(uint32_t id, uint32_t mask);
 void config_ensaio(void);
 void TC0_Handler(void);
+float control(float input);
 //========================================
 
 /*==========================================================================================*\
@@ -65,9 +77,20 @@ volatile bool data_rdy;
 uint32_t aFlag = 0;
 uint32_t bFlag = 0;
 
+float Ci = 0;
+float Cp = 0;
+float Cd = 0;
+
+unsigned long lastTime = 0;
+float lastError=0;
+
+float Kp = 1;
+float Ki = 1;
+float Kd = 1;
+
 int32_t round = 0;
 
-int32_t graus = 0;
+float graus = 0;
 
 //==============================================================================================
 
@@ -75,6 +98,64 @@ int32_t graus = 0;
 void SysTick_Handler(void){
 	g_ul_ms_ticks++;
 }
+
+/*
+
+*/
+float control(float input){
+
+	    unsigned long now = rtc_get_milliseconds(RTC);
+	    float dt;
+	    float error;
+	    float de;
+	    float output;
+		
+		dt = (float)(now - lastTime)/1000.0f;
+		
+		/* Calculate delta error */
+		error = SETPOINT - input;
+		    
+		de = error - lastError;
+		//printf("input: " + String(input));
+		//printf("error: " + String(error));
+		//printf("de: " + String(de));
+
+		/* Proportional Term */
+		Cp = error;
+		//printf("cp: " + String(Cp));
+
+		/* Integral Term */
+		Ci += error*dt;
+		//printf("ci: " + String(Ci));
+
+		Cd = 0;
+		/* to avoid division by zero */
+		if(dt>0)
+		{
+			/* Derivative term */
+			Cd = de/dt;
+			//printf("cd: " + String(Cd));
+		}
+
+		/* Save for the next iteration */
+		lastError = error;
+		lastTime = now;
+
+		/* Sum terms: pTerm+iTerm+dTerm */
+		output = Cp*Kp + Ci*Ki + Cd*Kd;
+		//printf("output: " + String(output));
+
+		/* Saturation - Windup guard for Integral term do not reach very large values */
+		if(output > WINDUP_GUARD){
+			output = WINDUP_GUARD;
+		}
+		else if (output < -WINDUP_GUARD){
+			output = -WINDUP_GUARD;
+		}
+
+		return output;
+}
+
 
 /*
 * Função Handler da interrupção da Serial.
@@ -182,14 +263,17 @@ void TC0_Handler(void){
 	/* Clear status bit to acknowledge interrupt */
 	ul_dummy = tc_get_status(TC0, TC_CHANNEL);
 
-	puts("SULAMINA");
+	//puts("SULAMINA");
 	
 	/*
 	*	Inserir o algoritimo do controle aki!!
 	*/
+	printf("contagem = %i\n",round);
 	graus = (round/ENC_RES)*VOLTA_COMP;
 	
-	printf("Graus = %i\n",graus);
+	
+	
+	printf("Graus = %g\n",graus);
 }
 
 void pin_handler(uint32_t id, uint32_t mask){
@@ -199,7 +283,7 @@ void pin_handler(uint32_t id, uint32_t mask){
 				if (bFlag){
 					gpio_toggle_pin(LED0_GPIO);
 					round++;
-					puts("Crescendo!!");
+//					puts("Anti-horario!!");
 					} else {
 					aFlag = 1;
 				}
@@ -208,7 +292,7 @@ void pin_handler(uint32_t id, uint32_t mask){
 				if (aFlag){
 					gpio_toggle_pin(LED0_GPIO);
 					round--;
-					puts("Decrescendo!!");
+//					puts("Horario!!");
 					} else {
 					bFlag = 1;
 				}
@@ -217,7 +301,7 @@ void pin_handler(uint32_t id, uint32_t mask){
 				gpio_toggle_pin(LED0_GPIO);
 				bFlag = 0;
 				aFlag = 0;
-				puts("Acabou o ciclo");
+	//			puts("Acabou o ciclo");
 			break;
 		}
 	}
