@@ -11,14 +11,14 @@
 #include <stdarg.h>
 
 #define TC_CHANNEL	0
-
+	
 #define ID_ENC		ID_PIOB
 #define ENC_PULSE_A		PIO_PB3	// GPIO EXT 1 - 5
-#define ENC_PULSE_B		PIO_PB9	// GPIO EXT 1 - 6
+#define ENC_PULSE_B		PIO_PB9	// GPIO EXT 1 - 6	
 #define ENC_REFER		PIO_PB4	// GPIO EXT 3 - 5
 
-#define MOTOR_P	PIO_PA0	//PWM(+) EXT - 7
-#define MOTOR_N	PIO_PA1	//PWM(-) EXT - 8
+#define MOTOR_P	PIO_PA0	//PWM(+) EXT 1 - 7
+#define MOTOR_N	PIO_PA1	//PWM(-) EXT 1 - 8
 
 #define ENC_RES		1024
 #define VOLTA_COMP	360
@@ -29,19 +29,10 @@
 */
 
 #define ANGLE_SETPOINT 		0.0
-#define ANGLE_LIMIT 		0.0
-#define ANGLE_KP_AGGR 		0.0
-#define ANGLE_KI_AGGR 		0.0
-#define ANGLE_KD_AGGR 		0.0
-#define ANGLE_KP_CONS 		2.0
-#define ANGLE_KI_CONS 		0.0
-#define ANGLE_KD_CONS 		0.0
 #define ANGLE_IRRECOVERABLE 45.0
-#define CALIBRATED_ZERO_ANGLE 0.0
+
 #define WINDUP_GUARD 		100
 
-
-volatile uint32_t g_ul_ms_ticks = 0;
 
 #define STRING_EOL    "\n\r"
 #define STRING_HEADER "\r\n-- Gustavo Gonçalves --\r\n-- PROJETO_PENDULO_INVERTIDO --\r\n" \
@@ -77,6 +68,8 @@ volatile bool data_rdy;
 uint32_t aFlag = 0;
 uint32_t bFlag = 0;
 
+uint8_t aux = 1;
+
 float Ci = 0;
 float Cp = 0;
 float Cd = 0;
@@ -84,6 +77,9 @@ float Cd = 0;
 unsigned long lastTime = 0;
 float lastError=0;
 
+volatile uint32_t g_ul_ms_ticks = 0;
+
+// Ganhos de cada parte do controlador
 float Kp = 1;
 float Ki = 1;
 float Kd = 1;
@@ -100,11 +96,13 @@ void SysTick_Handler(void){
 }
 
 /*
-
+	subrotina do controlador
 */
 float control(float input){
-
-	    unsigned long now = rtc_get_milliseconds(RTC);
+	
+	//rtc_get_milliseconds(RTC);
+	    uint32_t now = 0;
+				
 	    float dt;
 	    float error;
 	    float de;
@@ -116,17 +114,12 @@ float control(float input){
 		error = SETPOINT - input;
 		    
 		de = error - lastError;
-		//printf("input: " + String(input));
-		//printf("error: " + String(error));
-		//printf("de: " + String(de));
 
 		/* Proportional Term */
 		Cp = error;
-		//printf("cp: " + String(Cp));
 
 		/* Integral Term */
 		Ci += error*dt;
-		//printf("ci: " + String(Ci));
 
 		Cd = 0;
 		/* to avoid division by zero */
@@ -134,7 +127,6 @@ float control(float input){
 		{
 			/* Derivative term */
 			Cd = de/dt;
-			//printf("cd: " + String(Cd));
 		}
 
 		/* Save for the next iteration */
@@ -206,7 +198,7 @@ static void conf_TC (void){
 	tc_find_mck_divisor(4,tc_sysclk, &tc_div, &tc_tcclks, tc_sysclk);
 	tc_init(TC0, TC_CHANNEL , tc_tcclks | TC_CMR_CPCTRG);
 	//interrupção a cada 250 milisegundos.
-	tc_write_rc(TC0, TC_CHANNEL, (tc_sysclk/tc_div) / 4 );
+	tc_write_rc(TC0, TC_CHANNEL, (tc_sysclk/tc_div) / 4);
 	
 	NVIC_EnableIRQ(TC0_IRQn);
 	tc_enable_interrupt(TC0, TC_CHANNEL, TC_IER_CPCS);
@@ -238,6 +230,10 @@ void config_ensaio(void){
 	pio_handler_set(PIOB, ID_ENC, ENC_REFER, PIO_IT_FALL_EDGE, pin_handler);
 	pio_enable_interrupt(PIOB, ENC_REFER);
 	
+	//Pinos do motor
+	pio_set_output(PIOA,MOTOR_N,PIO_DEFAULT,false,false);
+	pio_set_output(PIOA,MOTOR_P,PIO_DEFAULT,false,false);
+	
 	//Enable Interrupt GPIO:
 	NVIC_DisableIRQ(PIOB_IRQn);
 	NVIC_ClearPendingIRQ(PIOB_IRQn);
@@ -259,49 +255,66 @@ void config_ensaio(void){
 void TC0_Handler(void){
 	
 	volatile uint32_t ul_dummy;
+	char log[30];
+	float motorPorcent;
 
 	/* Clear status bit to acknowledge interrupt */
 	ul_dummy = tc_get_status(TC0, TC_CHANNEL);
 
-	//puts("SULAMINA");
-	
 	/*
 	*	Inserir o algoritimo do controle aki!!
 	*/
-	printf("contagem = %i\n",round);
 	graus = (round/ENC_RES)*VOLTA_COMP;
+
+	sprintf(log,"Graus: %f\nTicks: %i\n",graus,round);
+	printf("%s",log);
 	
+	motorPorcent = control(graus);
 	
-	
-	printf("Graus = %g\n",graus);
+	if( 0 > motorPorcent)
+	{
+		pio_set_pin_high(MOTOR_P);
+		pio_set_pin_low(MOTOR_N);
+		
+	}else if ( 0 < motorPorcent )
+	{
+		pio_set_pin_high(MOTOR_N);
+		pio_set_pin_low(MOTOR_P);
+		
+	}else
+	{
+		pio_set_pin_low(MOTOR_N);
+		pio_set_pin_low(MOTOR_P);
+	}
+
 }
 
-void pin_handler(uint32_t id, uint32_t mask){
+void pin_handler(uint32_t id, uint32_t mask){	
 	if (id == ID_ENC){
 		switch (mask){
 			case ENC_PULSE_A:
+			puts("PULSO A");
 				if (bFlag){
 					gpio_toggle_pin(LED0_GPIO);
 					round++;
-//					puts("Anti-horario!!");
 					} else {
 					aFlag = 1;
 				}
 			break;
-			case ENC_PULSE_B:
+			case !ENC_PULSE_B:
+			puts("PULSO B");
 				if (aFlag){
 					gpio_toggle_pin(LED0_GPIO);
 					round--;
-//					puts("Horario!!");
 					} else {
 					bFlag = 1;
 				}
 			break;
 			case ENC_REFER:
+				puts("PULSO REF");
 				gpio_toggle_pin(LED0_GPIO);
 				bFlag = 0;
 				aFlag = 0;
-	//			puts("Acabou o ciclo");
 			break;
 		}
 	}
@@ -329,6 +342,6 @@ int main (void)
 	
 	puts(STRING_HEADER);
 	
-	while (1) {	
+	while (1) {
 	}
 }
